@@ -1,0 +1,40 @@
+{
+  "name": "grammy-telegraph",
+  "version": "0.1.0",
+  "description": "A grammY plugin for sending long messages via Telegraph",
+  "homepage": "https://grammy.dev/plugins/telegraph",
+  "main": "./out/mod.js",
+  "types": "./out/mod.d.ts",
+  "type": "commonjs",
+  "scripts": {
+    "build": "deno2node tsconfig.json"
+  },
+  "exports": {
+    ".": {
+      "types": "./out/mod.d.ts",
+      "default": "./out/mod.js"
+    }
+  },
+  "files": [
+    "out/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "grammy",
+    "telegram",
+    "telegraph",
+    "plugin",
+    "bot"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "grammy": "^1.0.0"
+  },
+  "devDependencies": {
+    "deno2node": "~1.14.0"
+  }
+}
