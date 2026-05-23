@@ -3,7 +3,6 @@ import {
   telegraph,
   type TelegraphContext,
   TelegraphError,
-  textToNodes,
 } from "../src/mod.ts";
 
 // --- TelegraphError ---
@@ -23,32 +22,97 @@ Deno.test("TelegraphError has correct name", () => {
   assertEquals(err.name, "TelegraphError");
 });
 
-// --- textToNodes ---
+// --- text conversion (via ctx.telegraph.createPage) ---
 
-Deno.test("textToNodes wraps single paragraph in p tag", () => {
-  const nodes = textToNodes("Hello world");
-  assertEquals(nodes, [{ tag: "p", children: ["Hello world"] }]);
+function makeCtx() {
+  return {} as TelegraphContext;
+}
+
+function mockFetch(capturedBody: { value: unknown }) {
+  return ((_url: string, opts: RequestInit) => {
+    capturedBody.value = JSON.parse(opts.body as string);
+    return Promise.resolve(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          result: { url: "https://telegra.ph/X", path: "X" },
+        }),
+        { status: 200 },
+      ),
+    );
+  }) as typeof fetch;
+}
+
+Deno.test("single paragraph is wrapped in one p tag", async () => {
+  const originalFetch = globalThis.fetch;
+  const captured = { value: undefined as unknown };
+  globalThis.fetch = mockFetch(captured);
+  const ctx = makeCtx();
+  try {
+    await telegraph({ accessToken: "t" })(ctx, () => Promise.resolve());
+    await ctx.telegraph.createPage({ title: "T", text: "Hello world" });
+    assertEquals((captured.value as Record<string, unknown>).content, [
+      { tag: "p", children: ["Hello world"] },
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
-Deno.test("textToNodes splits on double newline into separate p tags", () => {
-  const nodes = textToNodes("Para one\n\nPara two");
-  assertEquals(nodes, [
-    { tag: "p", children: ["Para one"] },
-    { tag: "p", children: ["Para two"] },
-  ]);
+Deno.test("double newline splits into separate p tags", async () => {
+  const originalFetch = globalThis.fetch;
+  const captured = { value: undefined as unknown };
+  globalThis.fetch = mockFetch(captured);
+  const ctx = makeCtx();
+  try {
+    await telegraph({ accessToken: "t" })(ctx, () => Promise.resolve());
+    await ctx.telegraph.createPage({
+      title: "T",
+      text: "Para one\n\nPara two",
+    });
+    assertEquals((captured.value as Record<string, unknown>).content, [
+      { tag: "p", children: ["Para one"] },
+      { tag: "p", children: ["Para two"] },
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
-Deno.test("textToNodes filters empty paragraphs from multiple newlines", () => {
-  const nodes = textToNodes("Para one\n\n\n\nPara two");
-  assertEquals(nodes, [
-    { tag: "p", children: ["Para one"] },
-    { tag: "p", children: ["Para two"] },
-  ]);
+Deno.test("multiple consecutive newlines produce no empty p tags", async () => {
+  const originalFetch = globalThis.fetch;
+  const captured = { value: undefined as unknown };
+  globalThis.fetch = mockFetch(captured);
+  const ctx = makeCtx();
+  try {
+    await telegraph({ accessToken: "t" })(ctx, () => Promise.resolve());
+    await ctx.telegraph.createPage({
+      title: "T",
+      text: "Para one\n\n\n\nPara two",
+    });
+    assertEquals((captured.value as Record<string, unknown>).content, [
+      { tag: "p", children: ["Para one"] },
+      { tag: "p", children: ["Para two"] },
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
-Deno.test("textToNodes keeps single newline within the same p tag", () => {
-  const nodes = textToNodes("Line one\nLine two");
-  assertEquals(nodes, [{ tag: "p", children: ["Line one\nLine two"] }]);
+Deno.test("single newline stays inside the same p tag", async () => {
+  const originalFetch = globalThis.fetch;
+  const captured = { value: undefined as unknown };
+  globalThis.fetch = mockFetch(captured);
+  const ctx = makeCtx();
+  try {
+    await telegraph({ accessToken: "t" })(ctx, () => Promise.resolve());
+    await ctx.telegraph.createPage({ title: "T", text: "Line one\nLine two" });
+    assertEquals((captured.value as Record<string, unknown>).content, [
+      { tag: "p", children: ["Line one\nLine two"] },
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 // --- ctx.telegraph.createPage ---

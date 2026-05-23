@@ -28,7 +28,7 @@ export type TelegraphFlavor = {
   };
 };
 
-export function textToNodes(
+function textToNodes(
   text: string,
 ): Array<{ tag: string; children: string[] }> {
   return text
