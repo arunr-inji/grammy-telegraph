@@ -27,6 +27,11 @@
     "plugin",
     "bot"
   ],
+  "author": "arunr-inji",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arunr-inji/grammy-telegraph.git"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
